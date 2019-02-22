@@ -28,22 +28,28 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
+//        try {
+//            Camera.Parameters parameters = mCamera.getParameters();
+//            List<Camera.Size> sizeList = parameters.getSupportedPictureSizes();
+//            int chosenSize = getPictureSizeIndexForHeight(sizeList, 800);
+//            parameters.setPictureSize(sizeList.get(chosenSize).width, sizeList.get(chosenSize).height);
+//
+//            parameters.set("orientation", "portrait");
+//            mCamera.setParameters(parameters);
+//            mCamera.setDisplayOrientation(90);
+//            mCamera.setPreviewDisplay(holder);
+//            mCamera.startPreview();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         try {
+            // create the surface and start camera preview
             if (mCamera == null) {
-                Camera.Parameters parameters = mCamera.getParameters();
-                List<Camera.Size> sizeList = parameters.getSupportedPictureSizes();
-                int chosenSize = getPictureSizeIndexForHeight(sizeList, 800);
-                parameters.setPictureSize(sizeList.get(chosenSize).width, sizeList.get(chosenSize).height);
-
-                parameters.set("orientation", "portrait");
-                mCamera.setParameters(parameters);
-                mCamera.setDisplayOrientation(90);
                 mCamera.setPreviewDisplay(holder);
                 mCamera.startPreview();
             }
-
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.d(VIEW_LOG_TAG, "Error setting camera preview: " + e.getMessage());
         }
     }
 

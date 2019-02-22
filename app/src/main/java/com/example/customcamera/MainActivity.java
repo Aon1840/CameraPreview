@@ -47,6 +47,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bindView();
 
         checkAndGivePermission();
+
+        ivCapture.setOnClickListener(this);
+        ivFilter.setOnClickListener(this);
+        ivChange.setOnClickListener(this);
     }
 
     private void checkAndGivePermission() {
@@ -60,16 +64,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initial() {
-        mCamera = Camera.open();
+        mCamera = getCameraInstance();
         mCamera.setDisplayOrientation(90);
         mPreview = new CameraPreview(this, mCamera);
         if (rlCameraPreview != null) {
             rlCameraPreview.addView(mPreview);
         }
-
-        ivCapture.setOnClickListener(this);
-        ivFilter.setOnClickListener(this);
-        ivChange.setOnClickListener(this);
+        mPicture = getPictureCallback();
     }
 
     private void bindView() {
@@ -333,8 +334,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onResume() {
         super.onResume();
         if (mCamera == null) {
-            mCamera = Camera.open();
-            mCamera.setDisplayOrientation(90);
+            initial();
             Log.d(TAG,"Camera is null from onResume");
         } else {
             Log.d(TAG,"Camera is not null from onResume");
@@ -347,7 +347,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if(mCamera != null) {
 //            mCamera.stopPreview();
 //            onDestroy();
+            Log.d(TAG,"Camera is not null from onPause");
             releaseCamera();
+        } else {
+            Log.d(TAG,"Camera is null from onPause");
         }
     }
 
