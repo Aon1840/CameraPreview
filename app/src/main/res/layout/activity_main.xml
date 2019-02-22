@@ -22,14 +22,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
+
             <ImageView
                 android:id="@+id/ivCapture"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="80dp"
                 android:src="@drawable/ic_photo_camera_white"
                 android:padding="10dp"
-                android:layout_alignParentRight="true"
-                android:layout_centerVertical="true"/>
+                android:layout_centerVertical="true"
+                android:layout_centerHorizontal="true"/>
 
             <ImageView
                 android:id="@+id/ivFilter"
@@ -38,6 +39,16 @@
                 android:src="@drawable/ic_filter_white"
                 android:layout_centerVertical="true"
                 android:layout_alignParentRight="true"
+                android:padding="10dp"
+                />
+
+            <ImageView
+                android:id="@+id/ivChange"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_filter_white"
+                android:layout_centerVertical="true"
+                android:layout_alignParentLeft="true"
                 android:padding="10dp"
                 />
 

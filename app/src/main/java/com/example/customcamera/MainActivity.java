@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
+import android.media.Image;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -33,9 +34,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Camera mCamera;
     private HorizontalScrollView horizontalScrollView;
     private final int PERMISSION_CALLBACK_CONSTANT = 1000;
-    private ImageView ivCapture, ivFilter;
+    private ImageView ivCapture, ivFilter, ivChange;
     private FrameLayout rlCameraPreview;
     private CameraPreview mPreview;
+    private Camera.PictureCallback mPicture;
+    private boolean cameraFront = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +60,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initial() {
-        mCamera = getCameraInstance();
+        mCamera = Camera.open();
+        mCamera.setDisplayOrientation(90);
         mPreview = new CameraPreview(this, mCamera);
         if (rlCameraPreview != null) {
             rlCameraPreview.addView(mPreview);
@@ -65,11 +69,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         ivCapture.setOnClickListener(this);
         ivFilter.setOnClickListener(this);
+        ivChange.setOnClickListener(this);
     }
 
     private void bindView() {
         ivCapture = (ImageView) findViewById(R.id.ivCapture);
         ivFilter = (ImageView) findViewById(R.id.ivFilter);
+        ivChange = (ImageView) findViewById(R.id.ivChange);
         horizontalScrollView = (HorizontalScrollView) findViewById(R.id.hscFilterLayout);
         rlCameraPreview = (FrameLayout) findViewById(R.id.rlCameraPreview);
     }
@@ -85,33 +91,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return c;
     }
 
-    private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
-        @Override
-        public void onPictureTaken(byte[] data, Camera camera) {
-            File pictureFile = getOutputMediaFile();
-            if (pictureFile == null){
-                Log.d(TAG, "Error creating media file, check storage permissions: ");
-                return;
-            }
-
-            MediaScannerConnection.scanFile(MainActivity.this,
-                    new String[] { pictureFile.toString() }, null,
-                    new MediaScannerConnection.OnScanCompletedListener() {
-                        public void onScanCompleted(String path, Uri uri) {
-                            mCamera.startPreview();
-                        }
-                    });
-            try {
-                FileOutputStream fos = new FileOutputStream(pictureFile);
-                fos.write(data);
-                fos.close();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    };
+//    private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
+//        @Override
+//        public void onPictureTaken(byte[] data, Camera camera) {
+//            File pictureFile = getOutputMediaFile();
+//            if (pictureFile == null){
+//                Log.d(TAG, "Error creating media file, check storage permissions: ");
+//                return;
+//            }
+//
+//            MediaScannerConnection.scanFile(MainActivity.this,
+//                    new String[] { pictureFile.toString() }, null,
+//                    new MediaScannerConnection.OnScanCompletedListener() {
+//                        public void onScanCompleted(String path, Uri uri) {
+//                            mCamera.startPreview();
+//                        }
+//                    });
+//            try {
+//                FileOutputStream fos = new FileOutputStream(pictureFile);
+//                fos.write(data);
+//                fos.close();
+//            } catch (FileNotFoundException e) {
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    };
 
     private static File getOutputMediaFile(){
         File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Bearman");
@@ -126,6 +132,65 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int num = random.nextInt(1000000);
         return new File(mediaStorageDir.getAbsolutePath() + File.separator +
                 "IMG_"+ num + ".jpg");
+    }
+
+    private int findFrontFacingCamera() {
+
+        int cameraId = -1;
+        // Search for the front facing camera
+        int numberOfCameras = Camera.getNumberOfCameras();
+        for (int i = 0; i < numberOfCameras; i++) {
+            Camera.CameraInfo info = new Camera.CameraInfo();
+            Camera.getCameraInfo(i, info);
+            if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                cameraId = i;
+                cameraFront = true;
+                break;
+            }
+        }
+        return cameraId;
+
+    }
+
+    private int findBackFacingCamera() {
+        int cameraId = -1;
+        //Search for the back facing camera
+        //get the number of cameras
+        int numberOfCameras = Camera.getNumberOfCameras();
+        //for every camera check
+        for (int i = 0; i < numberOfCameras; i++) {
+            Camera.CameraInfo info = new Camera.CameraInfo();
+            Camera.getCameraInfo(i, info);
+            if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+                cameraId = i;
+                cameraFront = false;
+                break;
+
+            }
+
+        }
+        return cameraId;
+    }
+
+    private void chooseCamera() {
+        if (cameraFront) {
+            int cameraId = findBackFacingCamera();
+            if (cameraId >= 0){
+                mCamera = Camera.open(cameraId);
+                mCamera.setDisplayOrientation(90);
+                mPicture = getPictureCallback();
+                mPreview.refreshCamera(mCamera);
+            }
+        } else {
+            int cameraId = findFrontFacingCamera();
+            if (cameraId >= 0) {
+                mCamera = Camera.open(cameraId);
+                mCamera.setDisplayOrientation(90);
+                mPicture = getPictureCallback();
+                mPicture = getPictureCallback();
+                mPreview.refreshCamera(mCamera);
+            }
+        }
     }
 
     public void colorEffectFilter(View v){
@@ -187,7 +252,49 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.ivCapture:
                 mCamera.takePicture(null,null,mPicture);
                 break;
+            case R.id.ivChange:
+                Log.d(TAG,"Hello from ivChange");
+//                chooseCamera();
+                int cameraNumber = Camera.getNumberOfCameras();
+                if (cameraNumber > 1){
+                    releaseCamera();
+                    chooseCamera();
+                }
+                break;
         }
+    }
+
+    private Camera.PictureCallback getPictureCallback() {
+        Camera.PictureCallback picture = new Camera.PictureCallback() {
+            @Override
+            public void onPictureTaken(byte[] data, Camera camera) {
+                File pictureFile = getOutputMediaFile();
+                if (pictureFile == null) {
+                    Log.d(TAG, "Error creating media file, check storage permissions: ");
+                    return;
+                }
+
+                MediaScannerConnection.scanFile(MainActivity.this,
+                        new String[] { pictureFile.toString() }, null,
+                    new MediaScannerConnection.OnScanCompletedListener() {
+                        public void onScanCompleted(String path, Uri uri) {
+                            mCamera.startPreview();
+                        }
+                    });
+
+                try {
+                    FileOutputStream fos = new FileOutputStream(pictureFile);
+                    fos.write(data);
+                    fos.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        return picture;
     }
 
     @Override
@@ -225,22 +332,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
+        if (mCamera == null) {
+            mCamera = Camera.open();
+            mCamera.setDisplayOrientation(90);
+            Log.d(TAG,"Camera is null from onResume");
+        } else {
+            Log.d(TAG,"Camera is not null from onResume");
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         if(mCamera != null) {
-            mCamera.stopPreview();
+//            mCamera.stopPreview();
+//            onDestroy();
+            releaseCamera();
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if(mCamera != null) {
+    private void releaseCamera() {
+        // stop and release camera
+        if (mCamera != null) {
+            mCamera.stopPreview();
+            mCamera.setPreviewCallback(null);
             mCamera.release();
             mCamera = null;
         }
     }
+
+//    @Override
+//    protected void onDestroy() {
+//        super.onDestroy();
+//        if(mCamera != null) {
+//            mCamera.startPreview();
+//            mCamera.setPreviewCallback(null);
+//            mCamera.release();
+//            mCamera = null;
+//        }
+//    }
 }

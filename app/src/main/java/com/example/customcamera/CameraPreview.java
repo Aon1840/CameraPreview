@@ -18,11 +18,9 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     public final String TAG = CameraPreview.class.getSimpleName();
     private SurfaceHolder mHolder;
     private Camera mCamera;
-    private Context context;
 
     public CameraPreview(Context context, Camera camera) {
         super(context);
-        context = getContext();
         mCamera = camera;
         mHolder = getHolder();
         mHolder.addCallback(this);
@@ -31,16 +29,19 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     public void surfaceCreated(SurfaceHolder holder) {
         try {
-            Camera.Parameters parameters = mCamera.getParameters();
-            List<Camera.Size> sizeList = parameters.getSupportedPictureSizes();
-            int chosenSize = getPictureSizeIndexForHeight(sizeList, 800);
-            parameters.setPictureSize(sizeList.get(chosenSize).width, sizeList.get(chosenSize).height);
+            if (mCamera == null) {
+                Camera.Parameters parameters = mCamera.getParameters();
+                List<Camera.Size> sizeList = parameters.getSupportedPictureSizes();
+                int chosenSize = getPictureSizeIndexForHeight(sizeList, 800);
+                parameters.setPictureSize(sizeList.get(chosenSize).width, sizeList.get(chosenSize).height);
 
-            parameters.set("orientation", "portrait");
-            mCamera.setParameters(parameters);
-            mCamera.setDisplayOrientation(90);
-            mCamera.setPreviewDisplay(holder);
-            mCamera.startPreview();
+                parameters.set("orientation", "portrait");
+                mCamera.setParameters(parameters);
+                mCamera.setDisplayOrientation(90);
+                mCamera.setPreviewDisplay(holder);
+                mCamera.startPreview();
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -64,21 +65,50 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
+//        if (mHolder.getSurface() == null) {
+//            return;
+//        }
+//
+//        try {
+//            mCamera.stopPreview();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        try {
+//            mCamera.setPreviewDisplay(mHolder);
+//            mCamera.startPreview();
+//
+//        } catch (Exception e) {
+//            Log.d(TAG, "Error starting camera preview: " + e.getMessage());
+//        }
+        refreshCamera(mCamera);
+    }
+
+    public void refreshCamera(Camera camera) {
         if (mHolder.getSurface() == null) {
+            // preview surface does not exist
             return;
         }
-
+        // stop preview before making changes
         try {
             mCamera.stopPreview();
         } catch (Exception e) {
-            e.printStackTrace();
+            // ignore: tried to stop a non-existent preview
         }
+        // set preview size and make any resize, rotate or
+        // reformatting changes here
+        // start preview with new settings
+        setCamera(camera);
         try {
             mCamera.setPreviewDisplay(mHolder);
             mCamera.startPreview();
-
         } catch (Exception e) {
-            Log.d(TAG, "Error starting camera preview: " + e.getMessage());
+            Log.d(VIEW_LOG_TAG, "Error starting camera preview: " + e.getMessage());
         }
+    }
+
+    public void setCamera(Camera camera) {
+        //method to set a camera instance
+        mCamera = camera;
     }
 }
