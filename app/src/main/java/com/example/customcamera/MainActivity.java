@@ -15,6 +15,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Surface;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -39,6 +40,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private CameraPreview mPreview;
     private Camera.PictureCallback mPicture;
     private boolean cameraFront = false;
+    private SurfaceView surfaceView;
+    private int cameraId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +74,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             rlCameraPreview.addView(mPreview);
         }
         mPicture = getPictureCallback();
+//        mCamera = getCameraInstance();
+//        Camera.Parameters parameters = mCamera.getParameters();
+//        Camera.Size bestPreviewSize = CameraPreview.getBestPreviewSize(parameters.getSupportedPreviewSizes(),surfaceView.getWidth(), surfaceView.getHeight());
+//        parameters.setPreviewSize(bestPreviewSize.width,bestPreviewSize.height);
+//        Camera.Size bestPictureSize = CameraPreview.getBestPictureSize(parameters.getSupportedPictureSizes());
+//        parameters.setPictureSize(bestPictureSize.width, bestPictureSize.height);
+//        mCamera.setParameters(parameters);
+//        mCamera.setDisplayOrientation(CameraPreview.getCameraDisplayOrientation(this,Camera.getNumberOfCameras()));
     }
 
     private void bindView() {
@@ -139,6 +150,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         int cameraId = -1;
         // Search for the front facing camera
+        cameraId = Camera.CameraInfo.CAMERA_FACING_FRONT;
         int numberOfCameras = Camera.getNumberOfCameras();
         for (int i = 0; i < numberOfCameras; i++) {
             Camera.CameraInfo info = new Camera.CameraInfo();
@@ -157,6 +169,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int cameraId = -1;
         //Search for the back facing camera
         //get the number of cameras
+        cameraId = Camera.CameraInfo.CAMERA_FACING_BACK;
         int numberOfCameras = Camera.getNumberOfCameras();
         //for every camera check
         for (int i = 0; i < numberOfCameras; i++) {
@@ -270,6 +283,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onPictureTaken(byte[] data, Camera camera) {
                 File pictureFile = getOutputMediaFile();
+                int orientation = CameraPreview.getCameraDisplayOrientation(MainActivity.this, cameraId);
+                CameraPreview.setImageOrientation(pictureFile, orientation);
                 if (pictureFile == null) {
                     Log.d(TAG, "Error creating media file, check storage permissions: ");
                     return;
